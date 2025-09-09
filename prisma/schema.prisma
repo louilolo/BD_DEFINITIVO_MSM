@@ -1,0 +1,52 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")   // runtime (Pooler 6543)
+  directUrl = env("DIRECT_URL")     // migrações (Direto 5432)
+}
+
+model Room {
+  id                 String   @id @default(uuid())
+  name               String
+  location           String?
+  capacity           Int?
+  openremoteAssetId  String?
+  createdAt          DateTime @default(now())
+  events             Event[]
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  role      String   @default("user")
+  createdAt DateTime @default(now())
+  events    Event[]  @relation("UserEvents")
+}
+
+model Event {
+  id           String   @id @default(uuid())
+  room         Room     @relation(fields: [roomId], references: [id])
+  roomId       String
+  createdBy    User?    @relation("UserEvents", fields: [createdById], references: [id])
+  createdById  String?
+  title        String
+  description  String?
+  startsAt     DateTime
+  endsAt       DateTime
+  timezone     String   @default("America/Belem")
+  status       String   @default("confirmed")
+  orScheduleId String?
+  createdAt    DateTime @default(now())
+
+  @@index([roomId, startsAt, endsAt])
+}
